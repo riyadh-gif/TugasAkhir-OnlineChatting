@@ -2,20 +2,51 @@
     <div>
         <a class="flex items-center gap-2" href="/">
             <img class="h-6" src="/static/images/logo.svg" alt="Logo"/>
-            <span class="text-lg font-bold">Private-Chat-APp</span>
+            <span class="text-lg font-bold">Real-time Chat</span>
         </a>
     </div>
     <nav class="block relative">
         <ul class="navitems flex items-center justify-center h-full">
             {% if request.user.is_authenticated %}
-            <li><a href="/">Home</a></li>
+            
             <li x-data="{ dropdownOpen: false }" class="relative">
-                <a @click="dropdownOpen = !dropdownOpen" @click.away="dropdownOpen = false" class="cursor-pointer select-none">
-                    <img class="h-8 w-8 rounded-full object-cover" src="{{ user.profile.avatar }}"/>
-                    {{ user.profile.name }}
-                    <img x-bind:class="dropdownOpen && 'rotate-180 duration-300'" class="w-4" src="https://img.icons8.com/small/32/ffffff/expand-arrow.png"/>
+                <!-- Dropdown button -->
+                <a @click="dropdownOpen = !dropdownOpen" @click.away="dropdownOpen = false" class="cursor-pointer select-none flex items-center">
+                    <span>Chat</span>
+                    <img :class="{ 'rotate-180 duration-300': dropdownOpen }" class="w-4 ml-2" src="https://img.icons8.com/small/32/ffffff/expand-arrow.png" alt="Expand Arrow"/>
                 </a>
+                <!-- Dropdown menu -->
                 <div x-show="dropdownOpen" x-cloak class="absolute right-0 bg-white text-black shadow rounded-lg w-40 p-2 z-20"
+                x-transition:enter="duration-300 ease-out"
+                x-transition:enter-start="opacity-0 -translate-y-5 scale-90"
+                x-transition:enter-end="opacity-100 translate-y-0 scale-100"
+                >
+                    <ul class="hoverlist [&>li>a]:justify-end">
+                        <!-- Public chat link -->
+                        <li><a href="{% url 'home' %}">Public Chat</a></li>
+                        
+                        <!-- Private chat links -->
+                        {% for chatroom in user.chat_groups.all %}
+                        {% if chatroom.is_private %}
+                            {% for member in chatroom.members.all %}
+                            {% if member != user %}
+                            <li><a href="{% url 'chatroom' chatroom.group_name %}">{{ member.profile.name }}</a></li>
+                            {% endif %}
+                            {% endfor %}
+                        {% endif %}
+                        {% endfor %}
+                    </ul>
+                </div>
+            </li>
+            
+            <li x-data="{ profileOpen: false }" class="relative">
+                <!-- Profile button -->
+                <a @click="profileOpen = !profileOpen" @click.away="profileOpen = false" class="cursor-pointer select-none flex items-center">
+                    <img class="h-8 w-8 rounded-full object-cover" src="{{ user.profile.avatar }}" alt="User Avatar"/>
+                    {{ user.profile.name }}
+                </a>
+                <!-- Profile menu -->
+                <div x-show="profileOpen" x-cloak class="absolute right-0 bg-white text-black shadow rounded-lg w-40 p-2 z-20"
                 x-transition:enter="duration-300 ease-out"
                 x-transition:enter-start="opacity-0 -translate-y-5 scale-90"
                 x-transition:enter-end="opacity-100 translate-y-0 scale-100"
@@ -28,7 +59,6 @@
                     </ul>
                 </div>
             </li>
-            
             {% else %}
             <li><a href="{% url 'account_login' %}">Login</a></li>
             <li><a href="{% url 'account_signup' %}?next={% url 'profile-onboarding' %}">Signup</a></li>
